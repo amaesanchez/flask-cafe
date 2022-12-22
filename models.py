@@ -29,6 +29,12 @@ class City(db.Model):
         nullable=False,
     )
 
+    @classmethod
+    def get_choices(self):
+        """ returns list of tuples containing city code & name """
+
+        return [(city.code, city.name) for city in City.query.all()]
+
 
 class Cafe(db.Model):
     """Cafe information."""
@@ -38,6 +44,7 @@ class Cafe(db.Model):
     id = db.Column(
         db.Integer,
         primary_key=True,
+        autoincrement=True
     )
 
     name = db.Column(

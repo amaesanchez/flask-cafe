@@ -1,11 +1,11 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, url_for, flash
 from flask_debugtoolbar import DebugToolbarExtension
 import os
 
 from models import db, connect_db, Cafe, City
-from forms import AddCafe, EditCafe
+from forms import CafeForm
 
 
 app = Flask(__name__)
@@ -77,6 +77,8 @@ def cafe_list():
         cafes=cafes,
     )
 
+    # return redirect('/cafes/add')
+
 
 @app.get('/cafes/<int:cafe_id>')
 def cafe_detail(cafe_id):
@@ -84,19 +86,32 @@ def cafe_detail(cafe_id):
 
     cafe = Cafe.query.get_or_404(cafe_id)
 
-    return render_template(
-        'cafe/detail.html',
-        cafe=cafe,
-    )
+    return render_template('/cafe/detail.html',
+        cafe=cafe)
 
 @app.route('/cafes/add', methods=['GET', 'POST'])
 def add_cafe():
     """ Display add cafe form, or post a new cafe """
 
-    form = AddCafe()
+    # figure out how to add cities?
+    form = CafeForm()
+    form.city_code.choices = City.get_choices()
 
-    # if form.validate_on_submit():
-    #     return
+    if form.validate_on_submit():
+        cafe = Cafe(
+            name=form.name.data,
+            description=form.description.data,
+            url=form.url.data,
+            address=form.address.data,
+            city_code=form.city_code.data,
+            image_url=form.image_url.data)
+
+        db.session.add(cafe)
+        db.session.commit()
+
+        flash(f'{cafe.name} added!')
+        redirect_url=url_for('cafe_detail', cafe_id=cafe.id)
+        return redirect(redirect_url)
 
     return render_template('/cafe/add-form.html', form=form)
 
@@ -104,6 +119,15 @@ def add_cafe():
 def edit_cafe(cafe_id):
     """ Display edit cafe form, or update cafe """
 
-    form = EditCafe()
+    cafe = Cafe.query.get(cafe_id)
 
-    return render_template('/cafe/edit-form.html', form=form)
+    form = CafeForm(obj=cafe)
+
+    if form.validate_on_submit():
+        form.populate_obj(cafe)
+        db.session.commit()
+
+        redirect_url = url_for('cafe_detail', cafe_id=cafe.id)
+        return redirect(redirect_url)
+
+    return render_template('/cafe/edit-form.html', cafe=cafe, form=form)

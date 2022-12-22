@@ -5,6 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 import os
 
 from models import db, connect_db, Cafe, City
+from forms import AddCafe, EditCafe
 
 
 app = Flask(__name__)
@@ -18,6 +19,7 @@ app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
+db.create_all()
 
 #######################################
 # auth & auth routes
@@ -86,3 +88,22 @@ def cafe_detail(cafe_id):
         'cafe/detail.html',
         cafe=cafe,
     )
+
+@app.route('/cafes/add', methods=['GET', 'POST'])
+def add_cafe():
+    """ Display add cafe form, or post a new cafe """
+
+    form = AddCafe()
+
+    # if form.validate_on_submit():
+    #     return
+
+    return render_template('/cafe/add-form.html', form=form)
+
+@app.route('/cafes/<int:cafe_id>/edit', methods=['GET', 'POST'])
+def edit_cafe(cafe_id):
+    """ Display edit cafe form, or update cafe """
+
+    form = EditCafe()
+
+    return render_template('/cafe/edit-form.html', form=form)

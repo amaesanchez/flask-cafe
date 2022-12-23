@@ -60,3 +60,6 @@ class LoginForm(FlaskForm):
 
     password = PasswordField('Password',
         validators=[InputRequired(), Length(min=6)])
+
+class CSRFProtectionForm(FlaskForm):
+    """ Form for CSRF token """

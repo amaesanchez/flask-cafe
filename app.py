@@ -1,11 +1,12 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template, redirect, url_for, flash, session
+from flask import Flask, render_template, redirect, url_for, flash, session, g
 from flask_debugtoolbar import DebugToolbarExtension
+from sqlalchemy.exc import IntegrityError
 import os
 
-from models import db, connect_db, Cafe, City, User
-from forms import CafeForm, SignupForm, LoginForm
+from models import db, connect_db, DEFAULT_IMG_URL, Cafe, City, User
+from forms import CafeForm, SignupForm, LoginForm, CSRFProtectionForm
 
 
 app = Flask(__name__)
@@ -14,7 +15,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///flaskcafe'
 app.config['SECRET_KEY'] = os.environ.get("FLASK_SECRET_KEY", "shhhh")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
+app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = False
 
 toolbar = DebugToolbarExtension(app)
 
@@ -38,6 +39,12 @@ def add_user_to_g():
     else:
         g.user = None
 
+@app.before_request
+def generate_CSRF_form():
+    """ instantiates CSRF form """
+
+    g.csrf_form = CSRFProtectionForm()
+
 
 def do_login(user):
     """Log in user."""
@@ -55,25 +62,32 @@ def do_logout():
 def signup():
     """ Display registration form, or post new user """
 
+    if CURR_USER_KEY in session:
+        del session[CURR_USER_KEY]
+
     form = SignupForm()
 
     if form.validate_on_submit():
-        user = SignupForm.register(
-            form.username.data,
-            form.email.data,
-            form.first_name.data,
-            form.last_name.data,
-            form.description.data,
-            form.password.data,
-            form.image_url.data or None
-        )
+        try:
+            user = User.register(
+                form.username.data,
+                form.email.data,
+                form.first_name.data,
+                form.last_name.data,
+                form.description.data,
+                form.password.data,
+                form.image_url.data or DEFAULT_IMG_URL
+            )
 
-        db.session.commit()
+            db.session.commit()
 
-        do_login(user)
+            do_login(user)
 
-        flash(f"Hello, {user.username}!")
-        return redirect('/cafes')
+            flash(f"You are signed up and logged in.", 'success')
+            return redirect('/cafes')
+
+        except IntegrityError:
+            flash("Username already taken", 'danger')
 
     return render_template('/auth/signup-form.html', form=form)
 
@@ -89,21 +103,29 @@ def login():
         if user:
             do_login(user)
 
-            flash(f"Hello, {user.username}!")
+            flash(f"Hello, {user.username}!", 'success')
             return redirect('/cafes')
 
-        else:
-            flash(NOT_LOGGED_IN_MSG)
-            return redirect('/cafes')
+        flash(NOT_LOGGED_IN_MSG, 'danger')
 
     return render_template('/auth/login-form.html', form=form)
+
+@app.post('/auth/logout')
+def logout():
+    """ Logs out user """
+
+    if g.csrf_form.validate_on_submit() and g.user:
+        do_logout()
+        flash('You should have successfully logged out.', 'success')
+
+    return redirect('/')
 
 
 
 #######################################
 # homepage
 
-@app.get("/")
+@app.get('/')
 def homepage():
     """Show homepage."""
 
@@ -152,7 +174,7 @@ def add_cafe():
             url=form.url.data,
             address=form.address.data,
             city_code=form.city_code.data,
-            image_url=form.image_url.data or None)
+            image_url=form.image_url.data or DEFAULT_IMG_URL)
 
         db.session.add(cafe)
         db.session.commit()
@@ -181,3 +203,12 @@ def edit_cafe(cafe_id):
         return redirect(redirect_url)
 
     return render_template('/cafe/edit-form.html', cafe=cafe, form=form)
+
+#######################################
+# users
+
+@app.get('/profile')
+def user_profile():
+    """ Display user profile """
+
+    return render_template('/profile/detail.html')

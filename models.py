@@ -93,6 +93,8 @@ class Cafe(db.Model):
 class User(db.Model):
     """ User table """
 
+    __tablename__ = 'users'
+
     id = db.Column(db.Integer,
         primary_key=True,
         autoincrement=True)
@@ -133,7 +135,7 @@ class User(db.Model):
         """ validates that password entered is equivalent to the hashed password
         in the database """
 
-        user = User.query.filter_by(username = username)
+        user = User.query.filter_by(username=username).first()
 
         if user:
             is_auth = bcrypt.check_password_hash(user.hashed_password, password)

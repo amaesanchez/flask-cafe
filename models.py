@@ -104,7 +104,7 @@ class User(db.Model):
         nullable=False)
 
     admin = db.Column(db.Boolean,
-        nullable=False)
+        nullable=False, default=False)
 
     email = db.Column(db.String(50),
         unique=True,
@@ -135,7 +135,7 @@ class User(db.Model):
         """ validates that password entered is equivalent to the hashed password
         in the database """
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=username).first() or None
 
         if user:
             is_auth = bcrypt.check_password_hash(user.hashed_password, password)
@@ -145,8 +145,8 @@ class User(db.Model):
         return False
 
     @classmethod
-    def register(cls, username, email, first_name, last_name,
-    description, password, image_url=DEFAULT_IMG_URL):
+    def register(cls, username, email, first_name, last_name, description,
+    password, admin=False, image_url=DEFAULT_IMG_URL):
         """ handles password hashiing and returns new user """
 
         #look into admin stuff from flask wrap up
@@ -154,13 +154,13 @@ class User(db.Model):
 
         user = User(
             username = username,
-            admin = False,
             email = email,
             first_name = first_name,
             last_name = last_name,
             description = description,
+            hashed_password = hashed_pw,
             image_url = image_url,
-            hashed_password = hashed_pw
+            admin = admin
         )
 
         db.session.add(user)

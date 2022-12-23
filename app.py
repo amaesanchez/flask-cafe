@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 import os
 
-from models import db, connect_db, DEFAULT_IMG_URL, Cafe, City, User
+from models import db, connect_db, Cafe, City, User
 from forms import CafeForm, SignupForm, LoginForm, CSRFProtectionForm
 
 
@@ -58,7 +58,11 @@ def do_logout():
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
 
-@app.route('/auth/signup', methods=['GET', 'POST'])
+@app.errorhandler(404)
+def not_found(err):
+  return render_template('404.html'), 404
+
+@app.route('/signup', methods=['GET', 'POST'])
 def signup():
     """ Display registration form, or post new user """
 
@@ -70,13 +74,13 @@ def signup():
     if form.validate_on_submit():
         try:
             user = User.register(
-                form.username.data,
-                form.email.data,
-                form.first_name.data,
-                form.last_name.data,
-                form.description.data,
-                form.password.data,
-                form.image_url.data or DEFAULT_IMG_URL
+                username = form.username.data,
+                email = form.email.data,
+                first_name = form.first_name.data,
+                last_name = form.last_name.data,
+                description = form.description.data,
+                password = form.password.data,
+                image_url = form.image_url.data or None
             )
 
             db.session.commit()
@@ -91,7 +95,7 @@ def signup():
 
     return render_template('/auth/signup-form.html', form=form)
 
-@app.route('/auth/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     """ Display login form, or logs user in """
 
@@ -106,11 +110,11 @@ def login():
             flash(f"Hello, {user.username}!", 'success')
             return redirect('/cafes')
 
-        flash(NOT_LOGGED_IN_MSG, 'danger')
+        flash("Invalid credentials.", 'danger')
 
     return render_template('/auth/login-form.html', form=form)
 
-@app.post('/auth/logout')
+@app.post('/logout')
 def logout():
     """ Logs out user """
 
@@ -174,7 +178,8 @@ def add_cafe():
             url=form.url.data,
             address=form.address.data,
             city_code=form.city_code.data,
-            image_url=form.image_url.data or DEFAULT_IMG_URL)
+            image_url=form.image_url.data or None
+        )
 
         db.session.add(cafe)
         db.session.commit()

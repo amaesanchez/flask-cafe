@@ -9,7 +9,10 @@
 
     <h1 class="mb-4">Welcome Back!</h1>
 
-    <!-- form goes here -->
+    <form method="POST" action="/auth/login">
+      {% include '_form.html' %}
+      <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
 
   </div>
 </div>

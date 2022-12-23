@@ -1,13 +1,13 @@
 """Data models for Flask Cafe"""
 
 
-from flask_bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt, generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 
 
 bcrypt = Bcrypt()
 db = SQLAlchemy()
-
+DEFAULT_IMG_URL = "/static/images/default-cafe.jpg"
 
 class City(db.Model):
     """Cities for cafes."""
@@ -76,7 +76,7 @@ class Cafe(db.Model):
     image_url = db.Column(
         db.Text,
         nullable=False,
-        default="/static/images/default-cafe.jpg",
+        default=DEFAULT_IMG_URL,
     )
 
     city = db.relationship("City", backref='cafes')
@@ -90,6 +90,79 @@ class Cafe(db.Model):
         city = self.city
         return f'{city.name}, {city.state}'
 
+class User(db.Model):
+    """ User table """
+
+    id = db.Column(db.Integer,
+        primary_key=True,
+        autoincrement=True)
+
+    username = db.Column(db.String(15),
+        unique=True,
+        nullable=False)
+
+    admin = db.Column(db.Boolean,
+        nullable=False)
+
+    email = db.Column(db.String(50),
+        unique=True,
+        nullable=False)
+
+    first_name = db.Column(db.String(30),
+        nullable=False)
+
+    last_name = db.Column(db.String(30),
+        nullable=False)
+
+    description = db.Column(db.Text)
+
+    image_url = db.Column(db.Text,
+        nullable=False,
+        default=DEFAULT_IMG_URL)
+
+    hashed_password = db.Column(db.Text,
+        nullable=False)
+
+    def get_full_name(self):
+        """ returns string of full name """
+
+        return f'{self.first_name} {self.last_name}'
+
+    @classmethod
+    def authenticate(cls, username, password):
+        """ validates that password entered is equivalent to the hashed password
+        in the database """
+
+        user = User.query.filter_by(username = username)
+
+        if user:
+            is_auth = bcrypt.check_password_hash(user.hashed_password, password)
+            if is_auth:
+                return user
+
+        return False
+
+    @classmethod
+    def register(cls, username, email, first_name, last_name,
+    description, password, image_url=DEFAULT_IMG_URL):
+        """ handles password hashiing and returns new user """
+
+        #look into admin stuff from flask wrap up
+        hashed_pw = bcrypt.generate_password_hash(password).decode('UTF-8')
+
+        user = User(
+            username = username,
+            admin = False,
+            email = email,
+            first_name = first_name,
+            last_name = last_name,
+            description = description,
+            image_url = image_url,
+            hashed_password = hashed_pw
+        )
+
+        db.session.add(user)
+        return user
 
 def connect_db(app):
     """Connect this database to provided Flask app.

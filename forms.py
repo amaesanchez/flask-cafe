@@ -2,8 +2,8 @@
 
 from flask_wtf import FlaskForm
 # from wtforms_alchemy import model_form_factory
-from wtforms import StringField, SelectField, TextAreaField, PasswordField, EmailField
-from wtforms.validators import InputRequired, Length
+from wtforms import StringField, SelectField, TextAreaField, PasswordField, EmailField, URLField
+from wtforms.validators import InputRequired, Email, Length, Optional, URL
 
 
 
@@ -28,3 +28,35 @@ class CafeForm(FlaskForm):
         validators=[InputRequired()])
 
     image_url = StringField('Image URL')
+
+class SignupForm(FlaskForm):
+    """ Form for creating a new user """
+
+    username = StringField('Username',
+        validators=[InputRequired()])
+
+    first_name = StringField('First Name',
+        validators=[InputRequired()])
+
+    last_name = StringField('Last Name',
+        validators=[InputRequired()])
+
+    description = TextAreaField('About You')
+
+    email = EmailField('Email',
+        validators=[InputRequired(), Email()])
+
+    password = PasswordField('Password',
+        validators=[InputRequired(), Length(min=6)])
+
+    image_url = URLField('Profile Image',
+        validators=[Optional(), URL()])
+
+class LoginForm(FlaskForm):
+    """ Form for logging in for an existing user """
+
+    username = StringField('Username',
+        validators=[InputRequired()])
+
+    password = PasswordField('Password',
+        validators=[InputRequired(), Length(min=6)])

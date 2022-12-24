@@ -5,8 +5,8 @@ from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 import os
 
-from models import db, connect_db, Cafe, City, User
-from forms import CafeForm, SignupForm, LoginForm, CSRFProtectionForm
+from models import db, connect_db, Cafe, City, User, DEFAULT_IMG_URL, DEFAULT_PROFILE_URL
+from forms import CafeForm, SignupForm, LoginForm, ProfileForm, CSRFProtectionForm
 
 
 app = Flask(__name__)
@@ -125,7 +125,6 @@ def logout():
     return redirect('/')
 
 
-
 #######################################
 # homepage
 
@@ -151,9 +150,6 @@ def cafe_list():
         cafes=cafes,
     )
 
-    # return redirect('/cafes/add')
-
-
 @app.get('/cafes/<int:cafe_id>')
 def cafe_detail(cafe_id):
     """Show detail for cafe."""
@@ -167,7 +163,10 @@ def cafe_detail(cafe_id):
 def add_cafe():
     """ Display add cafe form, or post a new cafe """
 
-    # figure out how to add cities?
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, 'danger')
+        return redirect('/')
+
     form = CafeForm()
     form.city_code.choices = City.get_choices()
 
@@ -184,7 +183,7 @@ def add_cafe():
         db.session.add(cafe)
         db.session.commit()
 
-        flash(f'{cafe.name} added!')
+        flash(f'{cafe.name} added!', 'success')
         redirect_url=url_for('cafe_detail', cafe_id=cafe.id)
         return redirect(redirect_url)
 
@@ -194,6 +193,10 @@ def add_cafe():
 def edit_cafe(cafe_id):
     """ Display edit cafe form, or update cafe """
 
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, 'danger')
+        return redirect('/')
+
     cafe = Cafe.query.get_or_404(cafe_id)
 
     form = CafeForm(obj=cafe)
@@ -201,9 +204,11 @@ def edit_cafe(cafe_id):
 
     if form.validate_on_submit():
         form.populate_obj(cafe)
+        cafe.image_url = form.image_url.data or DEFAULT_IMG_URL
+
         db.session.commit()
 
-        flash(f'{cafe.name} edited!')
+        flash(f'{cafe.name} edited!', 'success')
         redirect_url = url_for('cafe_detail', cafe_id=cafe.id)
         return redirect(redirect_url)
 
@@ -216,4 +221,46 @@ def edit_cafe(cafe_id):
 def user_profile():
     """ Display user profile """
 
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, 'danger')
+        return redirect('/')
+
     return render_template('/profile/detail.html')
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def edit_user():
+    """ Display edit profile form or update profile """
+
+    if not g.user:
+        flash(NOT_LOGGED_IN_MSG, 'danger')
+        return redirect('/')
+
+    form = ProfileForm(obj=g.user)
+
+    if form.validate_on_submit():
+        form.populate_obj(g.user)
+        g.user.image_url = form.image_url.data or DEFAULT_PROFILE_URL
+
+        db.session.commit()
+
+        flash('Profile edited!', 'success')
+        redirect_url = url_for('user_profile')
+        return redirect(redirect_url)
+
+    return render_template('/profile/edit-form.html', form=form)
+
+
+#######################################
+# Likes API
+
+@app.route('/api/likes', methods=['GET','POST'])
+def like_cafe():
+    """ Returns JSON of cafe's like status or
+    updates user's likes list and returns JSON """
+
+    
+
+
+@app.post('/api/unlike')
+def unlike_cafe():
+    """ Removes cafe from user's likes list and returns JSON"""

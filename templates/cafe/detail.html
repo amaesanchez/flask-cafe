@@ -12,7 +12,9 @@
 
   <div class="col-12 col-sm-10 col-md-8">
 
-    <h1>{{ cafe.name }}</h1>
+    <h1>{{ cafe.name }}
+      <button class="btn btn-outline-primary" id="like-unlike">Like</button>
+    </h1>
 
     <p class="lead">{{ cafe.description }}</p>
 
@@ -23,11 +25,13 @@
       {{ cafe.get_city_state() }}<br>
     </p>
 
+    {% if g.user %}
     <p>
       <a class="btn btn-outline-primary" href="/cafes/{{ cafe.id }}/edit">
         Edit Cafe
       </a>
     </p>
+    {% endif %}
 
   </div>
 

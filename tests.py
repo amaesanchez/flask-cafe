@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from flask import session
 from app import app, CURR_USER_KEY
-from models import db, Cafe, City, connect_db, User #, Like
+from models import db, Cafe, City, connect_db, User, Like
 
 # Use test database and don't clutter tests with SQL
 app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql:///flaskcafe_test"
@@ -396,7 +396,6 @@ class AuthViewsTestCase(TestCase):
 
     def test_signup_username_taken(self):
 
-        # FIXME: the integrity error hits first
         with app.test_client() as client:
             resp = client.get("/signup")
             self.assertIn(b'Sign Up', resp.data)
@@ -407,6 +406,8 @@ class AuthViewsTestCase(TestCase):
                 data=TEST_USER_DATA,
                 follow_redirects=True,
             )
+
+            db.session.rollback()
 
             self.assertIn(b"Username already taken", resp.data)
 
@@ -463,10 +464,33 @@ class NavBarTestCase(TestCase):
         db.session.commit()
 
     def test_anon_navbar(self):
-        self.fail("FIXME: write this test")
+        """ Tests that navbar only has access home, signup, and login tabs """
+        with app.test_client() as client:
+
+            resp = client.get('/')
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn("Sign up", html)
+            self.assertIn("Log in", html)
+            self.assertNotIn("Log Out", html)
+            self.assertEqual(session.get(CURR_USER_KEY), None)
+
 
     def test_logged_in_navbar(self):
-        self.fail("FIXME: write this test")
+        """ Test that user's fullname and logout tab are in the navbar """
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            resp = client.get('/')
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn("Log out", html)
+            self.assertNotIn("Sign up", html)
+            self.assertNotIn("Log in", html)
+            self.assertEqual(session.get(CURR_USER_KEY), self.user_id)
 
 
 class ProfileViewsTestCase(TestCase):
@@ -491,23 +515,134 @@ class ProfileViewsTestCase(TestCase):
         db.session.commit()
 
     def test_anon_profile(self):
-        self.fail("FIXME: write this test")
+        """ Tests that user cannot access profile routes """
+        with app.test_client() as client:
+
+            resp = client.get('/profile',
+                follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn('You are not logged in.', html)
+            self.assertEqual(session.get(CURR_USER_KEY), None)
 
     def test_logged_in_profile(self):
-        self.fail("FIXME: write this test")
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            user = User.query.get_or_404(self.user_id)
+            resp = client.get('/profile')
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn(user.get_full_name(), html)
+            self.assertTrue(session.get(CURR_USER_KEY))
 
     def test_anon_profile_edit(self):
-        self.fail("FIXME: write this test")
+        """ Tests that user cannot access profile edit form """
+        with app.test_client() as client:
+
+            resp = client.get('/profile/edit',
+                follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn('You are not logged in.', html)
+            self.assertEqual(session.get(CURR_USER_KEY), None)
 
     def test_logged_in_profile_edit(self):
-        self.fail("FIXME: write this test")
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            user = User.query.get_or_404(self.user_id)
+            resp = client.post('/profile/edit',
+                data=TEST_USER_DATA_EDIT,
+                follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn(user.get_full_name(), html)
+            self.assertTrue(session.get(CURR_USER_KEY))
 
 
 #######################################
 # likes
 
 
-# class LikeViewsTestCase(TestCase):
-#     """Tests for views on cafes."""
+class LikeViewsTestCase(TestCase):
+    """Tests for views on cafes."""
 
-#     # FIXME: add setup/teardown/inidividual tests
+    def setUp(self):
+        """Before each test, add sample user."""
+
+        User.query.delete()
+        Cafe.query.delete()
+        City.query.delete()
+
+        sf = City(**CITY_DATA)
+        db.session.add(sf)
+
+        cafe = Cafe(**CAFE_DATA)
+        db.session.add(cafe)
+
+        user = User.register(**TEST_USER_DATA)
+        db.session.add(user)
+
+        db.session.commit()
+
+        self.cafe_id = cafe.id
+        self.user_id = user.id
+
+    def tearDown(self):
+        """After each test, remove all users."""
+
+        Like.query.delete()
+        db.session.commit()
+
+    def test_anon_liked_list(self):
+        """ Test that anon user cannot access liked list in user's profile """
+        with app.test_client() as client:
+            resp = client.get("/profile", follow_redirects=True)
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn('You are not logged in.', html)
+            self.assertFalse(session.get(CURR_USER_KEY))
+
+    def test_logged_in_empty_likes(self):
+        """ Test that logged in user can see empty likes list
+        in their profile """
+
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            resp = client.get('/profile')
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn('You have no liked cafes.', html)
+            self.assertTrue(session.get(CURR_USER_KEY))
+
+    def test_logged_in_with_likes(self):
+        """ Test that logged in user can see populated likes list
+        in their profile """
+
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            user=User.query.get_or_404(self.user_id)
+            cafe=Cafe.query.get_or_404(self.cafe_id)
+
+            user.liked_cafes.append(cafe)
+
+            resp = client.get('/profile')
+
+            html = resp.get_data(as_text=True)
+
+            self.assertIn(cafe.name, html)
+            self.assertTrue(session.get(CURR_USER_KEY))
+

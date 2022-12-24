@@ -27,7 +27,8 @@ class CafeForm(FlaskForm):
     city_code = SelectField('City',
         validators=[InputRequired()])
 
-    image_url = StringField('Image URL')
+    image_url = URLField('Image URL',
+        validators=[Optional(), URL()])
 
 class SignupForm(FlaskForm):
     """ Form for creating a new user """
@@ -60,6 +61,23 @@ class LoginForm(FlaskForm):
 
     password = PasswordField('Password',
         validators=[InputRequired()])
+
+class ProfileForm(FlaskForm):
+    """ Form for creating a new user """
+
+    first_name = StringField('First Name',
+        validators=[InputRequired()])
+
+    last_name = StringField('Last Name',
+        validators=[InputRequired()])
+
+    description = TextAreaField('About You')
+
+    email = EmailField('Email',
+        validators=[InputRequired(), Email()])
+
+    image_url = URLField('Profile Image',
+        validators=[Optional(), URL()])
 
 class CSRFProtectionForm(FlaskForm):
     """ Form for CSRF token """

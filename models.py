@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 bcrypt = Bcrypt()
 db = SQLAlchemy()
 DEFAULT_IMG_URL = "/static/images/default-cafe.jpg"
+DEFAULT_PROFILE_URL = "/static/images/default-pic.png"
 
 class City(db.Model):
     """Cities for cafes."""
@@ -120,10 +121,15 @@ class User(db.Model):
 
     image_url = db.Column(db.Text,
         nullable=False,
-        default=DEFAULT_IMG_URL)
+        default=DEFAULT_PROFILE_URL)
 
     hashed_password = db.Column(db.Text,
         nullable=False)
+
+    liked_cafes = db.relationship('Cafe',
+        secondary='likes',
+        backref='liking_users'
+    )
 
     def get_full_name(self):
         """ returns string of full name """
@@ -146,7 +152,7 @@ class User(db.Model):
 
     @classmethod
     def register(cls, username, email, first_name, last_name, description,
-    password, admin=False, image_url=DEFAULT_IMG_URL):
+    password, admin=False, image_url=DEFAULT_PROFILE_URL):
         """ handles password hashiing and returns new user """
 
         #look into admin stuff from flask wrap up
@@ -165,6 +171,24 @@ class User(db.Model):
 
         db.session.add(user)
         return user
+
+class Like(db.Model):
+    """ Cafes liked table """
+
+    __tablename__ = 'likes'
+
+    #user, cafe is unique
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey('users.id', ondelete="cascade"),
+        primary_key=True,
+    )
+
+    cafe_id = db.Column(
+        db.Integer,
+        db.ForeignKey('cafes.id', ondelete="cascade"),
+        primary_key=True,
+    )
 
 def connect_db(app):
     """Connect this database to provided Flask app.

@@ -1,11 +1,11 @@
 """Flask App for Flask Cafe."""
 
-from flask import Flask, render_template, redirect, url_for, flash, session, g
+from flask import Flask, render_template, redirect, request, url_for, flash, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 import os
 
-from models import db, connect_db, Cafe, City, User, DEFAULT_IMG_URL, DEFAULT_PROFILE_URL
+from models import db, connect_db, Cafe, City, User, Like, DEFAULT_IMG_URL, DEFAULT_PROFILE_URL
 from forms import CafeForm, SignupForm, LoginForm, ProfileForm, CSRFProtectionForm
 
 
@@ -258,9 +258,39 @@ def like_cafe():
     """ Returns JSON of cafe's like status or
     updates user's likes list and returns JSON """
 
-    
+    if not g.user:
+        return {"error": "Not logged in"}
+
+    if request.method == 'GET':
+        cafe_id = request.args.get('cafe_id')
+        cafe = Cafe.query.get_or_404(cafe_id)
+
+        status = cafe in g.user.liked_cafes
+
+        return jsonify(likes=status)
+
+    else:
+        cafe_id = request.get_json()['cafe_id']
+        cafe = Cafe.query.get_or_404(cafe_id)
+        g.user.liked_cafes.append(cafe)
+
+        db.session.commit()
+
+        return jsonify(liked=cafe_id)
+
 
 
 @app.post('/api/unlike')
 def unlike_cafe():
     """ Removes cafe from user's likes list and returns JSON"""
+
+    if not g.user:
+        return {"error": "Not logged in"}
+
+    cafe_id = request.get_json()['cafe_id']
+    like = Like.query.get_or_404((g.user.id, cafe_id))
+
+    db.session.delete(like)
+    db.session.commit()
+
+    return jsonify(unliked=cafe_id)

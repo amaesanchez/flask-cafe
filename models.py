@@ -93,6 +93,8 @@ class Cafe(db.Model):
 
 class User(db.Model):
     """ User table """
+    # test admin username: admeen
+    # test admin pw: admin
 
     __tablename__ = 'users'
 

@@ -28,6 +28,7 @@ db.create_all()
 
 CURR_USER_KEY = "curr_user"
 NOT_LOGGED_IN_MSG = "You are not logged in."
+NOT_ADMIN_MSG = "You are not authorized to access this page."
 
 
 @app.before_request
@@ -168,6 +169,10 @@ def add_cafe():
         flash(NOT_LOGGED_IN_MSG, 'danger')
         return redirect('/')
 
+    if not g.user.admin:
+        flash(NOT_ADMIN_MSG, 'danger')
+        return redirect('/cafes')
+
     form = CafeForm()
     form.city_code.choices = City.get_choices()
 
@@ -197,6 +202,10 @@ def edit_cafe(cafe_id):
     if not g.user:
         flash(NOT_LOGGED_IN_MSG, 'danger')
         return redirect('/')
+
+    if not g.user.admin:
+        flash(NOT_ADMIN_MSG, 'danger')
+        return redirect('/cafes')
 
     cafe = Cafe.query.get_or_404(cafe_id)
 

@@ -2,6 +2,7 @@
 
 from flask import Flask, render_template, redirect, request, url_for, flash, session, g, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
 import os
 
@@ -257,26 +258,24 @@ def edit_user():
 def like_cafe():
     """ Returns JSON of cafe's like status or
     updates user's likes list and returns JSON """
-
     if not g.user:
         return {"error": "Not logged in"}
 
     if request.method == 'GET':
         cafe_id = request.args.get('cafe_id')
+
         cafe = Cafe.query.get_or_404(cafe_id)
 
         status = cafe in g.user.liked_cafes
-
         return jsonify(likes=status)
 
-    else:
-        cafe_id = request.get_json()['cafe_id']
-        cafe = Cafe.query.get_or_404(cafe_id)
-        g.user.liked_cafes.append(cafe)
+    cafe_id = request.get_json()['cafe_id']
 
-        db.session.commit()
+    cafe = Cafe.query.get_or_404(cafe_id)
+    g.user.liked_cafes.append(cafe)
 
-        return jsonify(liked=cafe_id)
+    db.session.commit()
+    return (jsonify(liked=cafe_id), 201)
 
 
 
@@ -293,4 +292,4 @@ def unlike_cafe():
     db.session.delete(like)
     db.session.commit()
 
-    return jsonify(unliked=cafe_id)
+    return (jsonify(unliked=cafe_id), 201)

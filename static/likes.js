@@ -25,12 +25,14 @@ async function getLikeStatus(cafe_id) {
     {"cafe_id" : cafe_id}
   });
 
+  console.log(resp.data)
+
   return resp.data.likes
 }
 
 async function likeCafe(cafe_id) {
   //post to api/likes
-  console.log('like')
+  console.debug('like')
 
   const resp = await axios({
     url : '/api/likes',
@@ -40,12 +42,19 @@ async function likeCafe(cafe_id) {
     }
   });
 
-  return resp.data
+  console.debug(resp.data)
+
+  fillLike()
+}
+
+function fillLike() {
+  $likeBtn.removeClass('btn-outline-primary').addClass('btn-primary')
 }
 
 async function unlikeCafe(cafe_id) {
   //post to api/unlike
-  console.log("unlike")
+  console.debug("unlike")
+
   const resp = await axios({
     url : '/api/unlike',
     method : 'POST',
@@ -54,7 +63,13 @@ async function unlikeCafe(cafe_id) {
     }
   });
 
-  return resp.data;
+  console.debug(resp.data)
+
+  unfillLike()
+}
+
+function unfillLike() {
+  $likeBtn.removeClass('btn-primary').addClass('btn-outline-primary')
 }
 
 $likeBtn.on('click', updateLikedCafes)

@@ -239,6 +239,7 @@ class CafeAdminViewsTestCase(TestCase):
     def setUp(self):
         """Before each test, add sample city, users, and cafes"""
 
+        User.query.delete()
         City.query.delete()
         Cafe.query.delete()
 
@@ -248,26 +249,36 @@ class CafeAdminViewsTestCase(TestCase):
         cafe = Cafe(**CAFE_DATA)
         db.session.add(cafe)
 
+        user = User.register(**TEST_USER_DATA)
+        db.session.add(user)
+
         db.session.commit()
 
         self.cafe_id = cafe.id
+        self.user_id = user.id
 
     def tearDown(self):
         """After each test, delete the cities."""
 
+        User.query.delete()
         Cafe.query.delete()
         City.query.delete()
         db.session.commit()
 
     def test_add(self):
         with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
             resp = client.get(f"/cafes/add")
+
             self.assertIn(b'Add Cafe', resp.data)
 
             resp = client.post(
                 f"/cafes/add",
                 data=CAFE_DATA_EDIT,
                 follow_redirects=True)
+
             self.assertIn(b'added', resp.data)
 
     def test_dynamic_cities_vocab(self):
@@ -280,6 +291,9 @@ class CafeAdminViewsTestCase(TestCase):
             r'San Francisco</option></select>')
 
         with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
             resp = client.get(f"/cafes/add")
             self.assertRegex(resp.data.decode('utf8'), choices_pattern)
 
@@ -290,6 +304,9 @@ class CafeAdminViewsTestCase(TestCase):
         id = self.cafe_id
 
         with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
             resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
             self.assertIn(b'Edit Test Cafe', resp.data)
 
@@ -303,6 +320,9 @@ class CafeAdminViewsTestCase(TestCase):
         id = self.cafe_id
 
         with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
             resp = client.get(f"/cafes/{id}/edit", follow_redirects=True)
             self.assertIn(b'Test description', resp.data)
 
@@ -466,13 +486,15 @@ class NavBarTestCase(TestCase):
     def test_anon_navbar(self):
         """ Tests that navbar only has access home, signup, and login tabs """
         with app.test_client() as client:
+            # with client.session_transaction() as sess:
+            #     sess[CURR_USER_KEY] = None
 
             resp = client.get('/')
 
             html = resp.get_data(as_text=True)
 
-            self.assertIn("Sign up", html)
-            self.assertIn("Log in", html)
+            self.assertIn("Sign Up", html)
+            self.assertIn("Log In", html)
             self.assertNotIn("Log Out", html)
             self.assertEqual(session.get(CURR_USER_KEY), None)
 
@@ -487,9 +509,9 @@ class NavBarTestCase(TestCase):
 
             html = resp.get_data(as_text=True)
 
-            self.assertIn("Log out", html)
-            self.assertNotIn("Sign up", html)
-            self.assertNotIn("Log in", html)
+            self.assertIn("Log Out", html)
+            self.assertNotIn("Sign Up", html)
+            self.assertNotIn("Log In", html)
             self.assertEqual(session.get(CURR_USER_KEY), self.user_id)
 
 
@@ -646,3 +668,44 @@ class LikeViewsTestCase(TestCase):
             self.assertIn(cafe.name, html)
             self.assertTrue(session.get(CURR_USER_KEY))
 
+    def test_api_likes(self):
+         with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            resp = client.get("/api/likes",
+                query_string={"cafe_id" : self.cafe_id})
+
+            json = resp.get_json()
+
+            self.assertEqual(json, {"likes" : False})
+
+    def test_post_like(self):
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            resp = client.post("/api/likes",
+                json={"cafe_id" : self.cafe_id})
+
+            json = resp.get_json()
+
+            self.assertEqual(json, {"liked" : self.cafe_id})
+            self.assertEqual(resp.status_code, 201)
+
+    def test_post_unlike(self):
+        with app.test_client() as client:
+            with client.session_transaction() as sess:
+                sess[CURR_USER_KEY] = self.user_id
+
+            like=Like(user_id=self.user_id, cafe_id=self.cafe_id)
+            db.session.add(like)
+            db.session.commit()
+
+            resp = client.post('/api/unlike',
+                json={"cafe_id" : self.cafe_id})
+
+            json = resp.get_json()
+
+            self.assertEqual(json, {"unliked" : self.cafe_id})
+            self.assertEqual(resp.status_code, 201)

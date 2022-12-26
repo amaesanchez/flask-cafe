@@ -13,8 +13,13 @@
   <div class="col-12 col-sm-10 col-md-8">
 
     <h1>{{ cafe.name }}
-      <button name='{{cafe.id}}' class="btn btn-outline-primary"
-      id="like-unlike">Like</button>
+      {% if cafe in g.user.liked_cafes %}
+        <button name='{{cafe.id}}' class="btn btn-primary"
+        id="like-unlike">Like</button>
+      {% else %}
+        <button name='{{cafe.id}}' class="btn btn-outline-primary"
+        id="like-unlike">Like</button>
+      {% endif %}
     </h1>
 
     <p class="lead">{{ cafe.description }}</p>

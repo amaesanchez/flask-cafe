@@ -249,7 +249,7 @@ class CafeAdminViewsTestCase(TestCase):
         cafe = Cafe(**CAFE_DATA)
         db.session.add(cafe)
 
-        user = User.register(**TEST_USER_DATA)
+        user = User.register(**ADMIN_USER_DATA)
         db.session.add(user)
 
         db.session.commit()
@@ -709,3 +709,9 @@ class LikeViewsTestCase(TestCase):
 
             self.assertEqual(json, {"unliked" : self.cafe_id})
             self.assertEqual(resp.status_code, 201)
+
+
+# edit test to auth admin only for add/edit cafes
+# potential further study -- add ability to unlike cafes from profile page
+    # maybe add an edit list button that redirects to a list of cafes and you
+    # can delete by clicking on name

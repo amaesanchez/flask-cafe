@@ -711,7 +711,6 @@ class LikeViewsTestCase(TestCase):
             self.assertEqual(resp.status_code, 201)
 
 
-# edit test to auth admin only for add/edit cafes
 # potential further study -- add ability to unlike cafes from profile page
     # maybe add an edit list button that redirects to a list of cafes and you
     # can delete by clicking on name

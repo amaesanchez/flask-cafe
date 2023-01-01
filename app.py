@@ -22,6 +22,8 @@ toolbar = DebugToolbarExtension(app)
 connect_db(app)
 db.create_all()
 
+import seed
+
 #######################################
 # auth & auth routes
 

@@ -1,16 +1,6 @@
 """Initial data."""
 
-from models import City, Cafe, User, db, connect_db
-from flask import Flask
-
-app = Flask(__name__)
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///flaskcafe'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = True
-
-connect_db(app)
-
+from models import City, Cafe, User, db
 db.drop_all()
 db.create_all()
 

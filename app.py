@@ -8,7 +8,6 @@ import os
 
 from models import db, connect_db, Cafe, City, User, Like, DEFAULT_IMG_URL, DEFAULT_PROFILE_URL
 from forms import CafeForm, SignupForm, LoginForm, ProfileForm, CSRFProtectionForm
-from mapping import get_map_url, save_map
 
 app = Flask(__name__)
 
@@ -158,7 +157,7 @@ def cafe_detail(cafe_id):
 
     cafe = Cafe.query.get_or_404(cafe_id)
 
-    map = save_map(cafe_id, cafe.address, cafe.city_code, cafe.city.state)
+    map = cafe.save_map()
 
     return render_template('/cafe/detail.html',
         cafe=cafe, map=map)

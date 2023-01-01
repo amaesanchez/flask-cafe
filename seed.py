@@ -50,7 +50,16 @@ c2 = Cafe(
     image_url='https://s3-media4.fl.yelpcdn.com/bphoto/0vhzcgkzIUIEPIyL2rF_YQ/o.jpg',
 )
 
-db.session.add_all([c1, c2])
+c3 = Cafe(
+    name="Druther's Coffee",
+    description="Best lighting and atmosphere for writing a Master's thesis.",
+    address="1113 N Country Rd",
+    city_code="sb",
+    url="http://www.druthers.coffee/",
+    image_url="https://lh3.googleusercontent.com/p/AF1QipMxtRXskH5IGOl52XM6ZA6MetHvwC8mTxOlZcch=s1360-w1360-h1020"
+)
+
+db.session.add_all([c1, c2, c3])
 db.session.commit()
 
 
@@ -76,7 +85,7 @@ u1 = User.register(
     password="secret",
 )
 
-db.session.add_all([u1])
+db.session.add_all([ua, u1])
 db.session.commit()
 
 
@@ -93,7 +102,7 @@ db.session.commit()
 #######################################
 # cafe maps
 
-# c1.save_map()
-# c2.save_map()
-#
-#db.session.commit()
+c1.save_map()
+c2.save_map()
+
+db.session.commit()

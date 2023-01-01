@@ -3,6 +3,8 @@
 
 from flask_bcrypt import Bcrypt, generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
+from mapping import save_map
+
 
 
 bcrypt = Bcrypt()
@@ -90,6 +92,12 @@ class Cafe(db.Model):
 
         city = self.city
         return f'{city.name}, {city.state}'
+
+    def save_map(self):
+
+        return save_map(self.id, self.address, self.city_code, self.city.state)
+
+
 
 class User(db.Model):
     """ User table """

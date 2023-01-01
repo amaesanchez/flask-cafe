@@ -1,5 +1,9 @@
 import os
+from dotenv import load_dotenv
+
 import requests
+
+load_dotenv()
 
 API_KEY = os.environ.get("MAPQUEST_API_KEY")
 
@@ -25,6 +29,7 @@ def save_map(id, address, city, state):
     if resp.ok:
         with open(os.path.join(path+"/static/images/maps/", file_name), 'wb') as fp:
             fp.write(resp.content)
+        print("Download finished")
     else:
         print("Download not allowed")
 

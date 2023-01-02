@@ -103,7 +103,7 @@ def login():
     """ Display login form, or logs user in """
 
     form = LoginForm()
-
+    
     if form.validate_on_submit():
         user = User.authenticate(form.username.data, form.password.data)
 

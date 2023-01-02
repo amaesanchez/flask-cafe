@@ -1,4 +1,4 @@
-{{ g.csrf_form.hidden_tag() }}
+{{ g.csrf_form.csrf_token }}
 
 {% for field in form if field.widget.input_type != 'hidden'%}
 

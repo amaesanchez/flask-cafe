@@ -305,3 +305,6 @@ def unlike_cafe():
     db.session.commit()
 
     return (jsonify(unliked=cafe_id), 201)
+
+
+# when

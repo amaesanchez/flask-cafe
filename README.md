@@ -3,7 +3,7 @@
 App to add local cafes and manage your 'liked' cafes.
 This project was designed to exercise database design and familiarize with mapping APIs.
 
-Deployed on: https://sanchez-flaskcafe.onrender.com
+Deployed on: https://sanchez-flask-cafe.onrender.com/
 
 ### Setting up locally
 

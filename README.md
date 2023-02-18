@@ -1,4 +1,7 @@
-# flask-cafe
+# Flask-cafe
+
+App to add local cafes and manage your 'liked' cafes.
+This project was designed to exercise database design and familiarize with mapping APIs.
 
 Deployed on: https://sanchez-flaskcafe.onrender.com
 

@@ -6,7 +6,7 @@ Deployed on: https://sanchez-flaskcafe.onrender.com
 
 Set up virtual env
 
-`python3 -m venv venv`
+`python3 -m venv venv` \n
 `source venv/bin/activate`
 
 Install dependencies

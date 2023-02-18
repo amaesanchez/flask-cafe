@@ -94,6 +94,7 @@ def signup():
             return redirect('/cafes')
 
         except IntegrityError:
+            #add db.session.rollback()?
             flash("Username already taken", 'danger')
 
     return render_template('/auth/signup-form.html', form=form)
@@ -103,7 +104,7 @@ def login():
     """ Display login form, or logs user in """
 
     form = LoginForm()
-    
+
     if form.validate_on_submit():
         user = User.authenticate(form.username.data, form.password.data)
 

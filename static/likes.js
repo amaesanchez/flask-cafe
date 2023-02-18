@@ -1,7 +1,5 @@
 "use strict";
 
-
-
 const $likeBtn = $('#like-unlike')
 
 async function updateLikedCafes(evt) {
@@ -73,5 +71,3 @@ function unfillLike() {
 }
 
 $likeBtn.on('click', updateLikedCafes)
-
-

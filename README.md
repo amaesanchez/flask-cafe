@@ -5,7 +5,7 @@ This project was designed to exercise database design and familiarize with mappi
 
 Deployed on: https://sanchez-flaskcafe.onrender.com/
 
-Guest Login:  
+### Guest Login  
 User: guest  
 password: password
 

@@ -6,11 +6,12 @@ import requests
 load_dotenv()
 
 API_KEY = os.environ.get("MAPQUEST_API_KEY")
+BASE_URL = os.environ.get("BASE_URL")
 
 def get_map_url(address, city, state):
     """Get MapQuest URL for a static map for this location."""
 
-    base = f"https://www.mapquestapi.com/staticmap/v5/map?key={API_KEY}"
+    base = f"{BASE_URL}?key={API_KEY}"
     where = f"{address},{city},{state}"
     return f"{base}&center={where}&defaultMarker=marker-red-sm&size=250,200@2x&zoom=15&locations={where}"
 

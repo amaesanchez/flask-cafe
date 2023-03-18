@@ -5,19 +5,24 @@ This project was designed to exercise database design and familiarize with mappi
 
 Deployed on: https://sanchez-flask-cafe.onrender.com/
 
-### Guest Login  
-User: guest  
-password: password
+**User: guest  
+password: password**
 
-### Setting up locally
+## Local Setup
 
-Set up virtual env
+1. Create a and activate virtual environment.
 
-  `python3 -m venv venv`  
-  `source venv/bin/activate`
+    ```
+    python3 -m venv venv
+    source venv/bin/activate
+    ```
+    
+2. Install dependencies.
 
-Install dependencies
-
-  `pip3 install -r requirements.txt`
-
-  `flask run`
+    ```
+    pip3 install -r requirements.txt
+    flask run
+    ```
+    
+## TODO
+- [ ] Utilize interactive map
